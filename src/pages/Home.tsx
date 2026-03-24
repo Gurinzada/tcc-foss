@@ -215,7 +215,7 @@ export default function Home() {
 
   return (
     <main
-      className={`row justify-content-center ${analysisResult ? "align-items-start pt-4" : "align-items-center"}`}
+      className={`row justify-content-center ${analysisResult ? "align-items-center" : "align-items-center"}`}
     >
       <section className="row justify-content-center align-items-center gap-2">
         <Card

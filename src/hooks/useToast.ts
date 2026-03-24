@@ -1,5 +1,4 @@
 import { notifications } from "@mantine/notifications"
-import { h } from "ionicons/dist/types/stencil-public-runtime";
 
 export default function useToast(){
     const handleSucessNotification = (title: string, message: string) => {
