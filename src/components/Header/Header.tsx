@@ -32,6 +32,9 @@ export default function Header() {
               style={{ cursor: "pointer" }}
               onClick={() => setOpened(true)}
             />
+            <Button variant="outline" color="#eb670d" className="ms-3" onClick={() => window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLSeiPH1Wk-WrD97xQqvhRMLn2ch3tNcSOOw7z4WxqY9am8j8yg/viewform?usp=dialog'} radius={"md"}>
+              Avalie
+            </Button>
           </div>
         </header>
       </IonHeader>
