@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Button, Card, Input } from "@mantine/core";
+import { Alert, Button, Card, Divider, Input, Skeleton } from "@mantine/core";
 import { useAppDispatch, useAppSelector } from "../store";
-import { IconSearch, IconX } from "@tabler/icons-react";
+import { IconInfoCircle, IconSearch, IconX } from "@tabler/icons-react";
 import { setQuerySearch, unsetQuerySearch } from "../store/slices/searchSlice";
 import useToast from "../hooks/useToast";
 import {
@@ -50,7 +51,7 @@ const BEGINNER_LABELS = [
 
 export default function Home() {
   const { query } = useAppSelector((state) => state.search);
-  const { loading, error } = useAppSelector((state) => state.gitHub);
+  const { loading } = useAppSelector((state) => state.gitHub);
   const { result: analysisResult } = useAppSelector((state) => state.analysis);
   const {
     hasToken,
@@ -59,11 +60,9 @@ export default function Home() {
   } = useAppSelector((state) => state.tokenGitHub);
   const size = 16;
   const dispatch = useAppDispatch();
-  const {
-    handleErrorNotification,
-    handleWarnNotification,
-  } = useToast();
-  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const { handleErrorNotification, handleWarnNotification } = useToast();
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState<boolean>(false);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState<boolean>(false);
 
   useEffect(() => {
     dispatch(tokenGitHubFind());
@@ -74,12 +73,12 @@ export default function Home() {
       verifyToken();
     }
   }, [token, hasToken]);
-  
+
   const verifyToken = async () => {
     if (hasToken && token !== null) {
-      const result = await dispatch(verifyGitHubToken(token));
-
-      if (result.payload === false) {
+      try {
+        await dispatch(verifyGitHubToken(token)).unwrap();
+      } catch (error) {
         dispatch(removeTokenGitHub());
         handleWarnNotification(
           "Token inválido",
@@ -129,7 +128,7 @@ export default function Home() {
 
     dispatch(clearGitHubState());
     dispatch(clearAnalysisResult());
-
+    setIsLoadingAnalysis(true);
     try {
       const [contentsData, readmeData, contributingData] = await Promise.all([
         dispatch(
@@ -211,13 +210,16 @@ export default function Home() {
         organizedComments,
         repoFullName: fullNamRepo,
       });
-
+      setIsLoadingAnalysis(false);
       dispatch(setAnalysisResult(analysis));
-    } catch {
+    } catch (error: any) {
+      console.error("Erro ao buscar dados do GitHub:", error);
       handleErrorNotification(
         "Erro ao Recuperar Dados",
         error || "Ocorreu um erro ao buscar os dados do repositório GitHub.",
       );
+    } finally {
+      setIsLoadingAnalysis(false);
     }
   };
 
@@ -305,11 +307,90 @@ export default function Home() {
                 Adicionar Token GitHub
               </Button>
             )}
+            {!hasToken && (
+              <Alert
+                icon={<IconInfoCircle size={18} />}
+                title="Por que preciso do token?"
+                color="orange"
+                variant="light"
+                radius="md"
+                className="col-12 col-sm-12 col-md-7 col-lg-7 mt-2"
+              >
+                O token autentica suas requisições na API do GitHub, aumentando
+                o limite de chamadas e liberando acesso a repositórios privados.
+                Ele é armazenado exclusivamente no seu navegador e nunca é
+                compartilhado — você pode removê-lo a qualquer momento nas
+                configurações.
+              </Alert>
+            )}
           </div>
         </Card>
       </section>
 
-      {analysisResult && <ScoreDashboard result={analysisResult} />}
+      {analysisResult ? (
+        <ScoreDashboard result={analysisResult} />
+      ) : (
+        isLoadingAnalysis && (
+          <div className="row justify-content-center mt-4 pb-5 w-100">
+            <div className="col-12 col-md-10 col-lg-8 mb-4">
+              <Card shadow="sm" padding="xl" radius="md" withBorder>
+                <div className="d-flex flex-column align-items-center gap-3">
+                  <div className="row justify-content-center align-items-center w-100">
+                    <div className="col-4" />
+                    <div className="col-4 d-flex justify-content-center">
+                      <Skeleton height={12} width={120} radius="sm" />
+                    </div>
+                    <div className="col-4 d-flex justify-content-end">
+                      <Skeleton height={35} width={35} circle />
+                    </div>
+                  </div>
+
+                  <Skeleton height={180} width={180} circle mt={8} />
+
+                  <Skeleton height={22} width={200} radius="sm" />
+
+                  <div className="d-flex flex-column align-items-center gap-1 w-100">
+                    <Skeleton height={12} width="70%" radius="sm" />
+                    <Skeleton height={12} width="55%" radius="sm" />
+                  </div>
+
+                  <div className="d-flex flex-wrap justify-content-center gap-3 mt-1">
+                    {[140, 160, 150, 130].map((w, i) => (
+                      <div key={i} className="d-flex align-items-center gap-1">
+                        <Skeleton height={10} width={10} circle />
+                        <Skeleton height={12} width={w} radius="sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <Divider
+              className="col-12 col-md-10 col-lg-8 mb-3"
+              label="Métricas detalhadas"
+              labelPosition="center"
+            />
+
+            <div className="col-12 col-md-10 col-lg-8">
+              <div className="row g-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="col-12 col-md-6">
+                    <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <div className="d-flex flex-column gap-2">
+                        <Skeleton height={16} width="50%" radius="sm" />
+                        <Skeleton height={12} width="85%" radius="sm" />
+                        <Skeleton height={12} width="70%" radius="sm" />
+                        <Skeleton height={8} radius="xl" mt={6} />
+                      </div>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
       <ModalToken
         isOpen={isTokenModalOpen}

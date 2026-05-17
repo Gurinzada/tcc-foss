@@ -20,21 +20,21 @@ export default function Header() {
 
   return (
     <>
-      <IonHeader>
+      <IonHeader style={{backgroundColor: "#fff", boxShadow: "none", position: "sticky", top: 0}}>
         <header className="m-2 row justify-content-space between aling-items-center">
-          <div className="col-4">
+          <div className="col-12 col-md-4">
             <h1>RepoHound</h1>
           </div>
-          <div className="col-4"></div>
-          <div className="col-4 d-flex justify-content-end align-items-center">
+          <div className="col-12 col-md-4"></div>
+          <div className="col-12 col-md-4 d-flex justify-content-md-end justify-content-start align-items-center p-0">
+            <Button variant="outline" color="#eb670d" className="ms-3" onClick={() => window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLSeiPH1Wk-WrD97xQqvhRMLn2ch3tNcSOOw7z4WxqY9am8j8yg/viewform?usp=dialog'} radius={"md"}>
+              Avalie
+            </Button>
             <IconSettings
               size={35}
               style={{ cursor: "pointer" }}
               onClick={() => setOpened(true)}
             />
-            <Button variant="outline" color="#eb670d" className="ms-3" onClick={() => window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLSeiPH1Wk-WrD97xQqvhRMLn2ch3tNcSOOw7z4WxqY9am8j8yg/viewform?usp=dialog'} radius={"md"}>
-              Avalie
-            </Button>
           </div>
         </header>
       </IonHeader>

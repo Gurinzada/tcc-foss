@@ -85,7 +85,24 @@ export const fetchGitHubContributors = createAsyncThunk(
         },
       });
       return response.data as GitHubContributor[];
-    } catch {
+    } catch (error: any) {
+      const status = error.response?.status;
+      if (status === 403) {
+        try {
+          const statsResponse = await api.get(
+            `/repos/${repoFullName}/stats/contributors`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          const mapped = (statsResponse.data as any[]).map((item) => ({
+            login: item.author.login,
+            avatar_url: item.author.avatar_url,
+            contributions: item.total,
+          })) as GitHubContributor[];
+          return mapped;
+        } catch  {
+          return [] as GitHubContributor[];
+        }
+      }
       return rejectWithValue("Falha ao recuperar contribuidores do GitHub.");
     }
   },
