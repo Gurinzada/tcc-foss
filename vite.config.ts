@@ -44,6 +44,12 @@ export default defineConfig({
             type: "image/png",
             purpose: "any",
           },
+          {
+            src: "android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
         screenshots: [
           {
@@ -63,7 +69,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallback: "index.html",
+        navigateFallback: undefined,
+        directoryIndex: null,
         globPatterns: ["**/*.{js,css,html,png,svg}"],
         skipWaiting: true,
         clientsClaim: true,
@@ -90,8 +97,9 @@ export default defineConfig({
               networkTimeoutSeconds: 3,
               plugins: [
                 {
+                  cacheWillUpdate: async () => null,
                   handlerDidError: async () => {
-                    return caches.match("offline.html");
+                    return caches.match("offline.html", { ignoreSearch: true });
                   },
                 },
               ],
