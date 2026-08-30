@@ -204,16 +204,19 @@ function calcTimeToFirstResponse(
   };
 }
 
-function calcIssueHealth(allIssues: GitHubRawIssue[]): MetricResult {
+function calcIssueHealth(allIssues: GitHubRawIssue[], totalOpenIssues: number): MetricResult {
   const checks: CheckItem[] = [];
 
   if (allIssues.length === 0) {
-    checks.push({ label: "Repositório tem issues abertas", passed: false });
+
+    const sampleOnlyPullRequests = totalOpenIssues > 0;
+
+    checks.push({ label: "Repositório tem issues abertas", passed: sampleOnlyPullRequests });
     return {
-      score: 0,
+      score: sampleOnlyPullRequests ? 60 : 0,
       weight: 0.2,
       title: "Saúde das Issues",
-      description: "Nenhuma issue aberta encontrada.",
+      description: sampleOnlyPullRequests ? `O repositório tem ${totalOpenIssues} issue${totalOpenIssues > 1 ? 's' : ''} aberta${totalOpenIssues > 1 ? "s" : "" }, mas os itens mais recentes são todos pull requests - ou seja, trabalho já submetido.`: "Nenhuma issue aberta encontrada.",
       checks,
     };
   }
@@ -283,7 +286,7 @@ export function computeAnalysis(input: AnalysisInput): AnalysisResult {
     input.organizedComments,
     input.taggedIssues.items,
   );
-  const issueHealth = calcIssueHealth(input.allIssues);
+  const issueHealth = calcIssueHealth(input.allIssues, input.totalOpenIssues);
 
   const overallScore = Math.round(
     documentation.score * documentation.weight +

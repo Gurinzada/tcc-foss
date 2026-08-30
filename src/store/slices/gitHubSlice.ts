@@ -124,12 +124,11 @@ export const fetchGitHubIssues = createAsyncThunk(
       console.log("Search query:", query);
 
       const response = await api.get(`/search/issues`, {
-        params: { q: query },
+        params: { q: query, per_page: 100, page: 1 },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       return response.data as GitHubIssue;
     } catch (error: any) {
       const message = error.response?.data?.message || error.message;

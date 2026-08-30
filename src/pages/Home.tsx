@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Alert, Button, Card, Divider, Input, Skeleton } from "@mantine/core";
-import { useAppDispatch, useAppSelector } from "../store";
+import { RootState, useAppDispatch, useAppSelector } from "../store";
 import { IconInfoCircle, IconSearch, IconX } from "@tabler/icons-react";
 import { setQuerySearch, unsetQuerySearch } from "../store/slices/searchSlice";
 import useToast from "../hooks/useToast";
@@ -11,7 +11,6 @@ import {
   fetchGitHubAllIssues,
   fetchGitHubComments,
   fetchGitHubContents,
-  fetchGitHubContributors,
   fetchGitHubIssues,
   fetchReadme,
   fetchTotalOpenIssues,
@@ -31,6 +30,7 @@ import {
   tokenGitHubFind,
 } from "../store/slices/tokenGitHubSlice";
 import ModalToken from "../components/Modals/ModalToken";
+import api from "../api/api";
 
 const BEGINNER_LABELS = [
   "good first issue",
@@ -47,11 +47,13 @@ const BEGINNER_LABELS = [
   "easy-fix",
   "quick-fix",
   "first-timers-only",
+  'discussion',
+  'question'
 ];
 
 export default function Home() {
   const { query } = useAppSelector((state) => state.search);
-  const { loading } = useAppSelector((state) => state.gitHub);
+  const { loading } = useAppSelector((state: RootState) => state.gitHub);
   const { result: analysisResult } = useAppSelector((state) => state.analysis);
   const {
     hasToken,
@@ -129,8 +131,31 @@ export default function Home() {
     dispatch(clearGitHubState());
     dispatch(clearAnalysisResult());
     setIsLoadingAnalysis(true);
+
     try {
-      const [contentsData, readmeData, contributingData] = await Promise.all([
+      await api.get(`repos/${fullNamRepo}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch {
+      handleErrorNotification(
+        "Repositório não encontrado",
+        "Não conseguimos localizar esse repositório no GitHub. Confira se a URL está correta e tente novamente.",
+      );
+      setIsLoadingAnalysis(false);
+      return;
+    }
+
+    try {
+      const [
+        contentsData,
+        readmeData,
+        contributingData,
+        allIssuesData,
+        totalOpenData,
+        taggedData,
+      ] = await Promise.all([
         dispatch(
           fetchGitHubContents({ repoFullName: fullNamRepo, token }),
         ).unwrap(),
@@ -138,17 +163,11 @@ export default function Home() {
         dispatch(
           fetchContributing({ repoFullName: fullNamRepo, token }),
         ).unwrap(),
-      ]);
-
-      const [allIssuesData, totalOpenData, , taggedData] = await Promise.all([
         dispatch(
           fetchGitHubAllIssues({ repoFullName: fullNamRepo, token }),
         ).unwrap(),
         dispatch(
           fetchTotalOpenIssues({ repoFullName: fullNamRepo, token }),
-        ).unwrap(),
-        dispatch(
-          fetchGitHubContributors({ repoFullName: fullNamRepo, token }),
         ).unwrap(),
         dispatch(
           fetchGitHubIssues({
@@ -161,9 +180,8 @@ export default function Home() {
 
       const commentsData: import("../types/gitHub").GitHubComment[] = [];
       if (taggedData && taggedData.total_count > 0) {
-        const limited = taggedData.items.slice(0, 20);
         const commentResults = await Promise.all(
-          limited.map((issue) =>
+          taggedData.items.map((issue) =>
             dispatch(
               fetchGitHubComments({
                 issueNumber: issue.number,
@@ -213,7 +231,6 @@ export default function Home() {
       setIsLoadingAnalysis(false);
       dispatch(setAnalysisResult(analysis));
     } catch (error: any) {
-      console.error("Erro ao buscar dados do GitHub:", error);
       handleErrorNotification(
         "Erro ao Recuperar Dados",
         error || "Ocorreu um erro ao buscar os dados do repositório GitHub.",
